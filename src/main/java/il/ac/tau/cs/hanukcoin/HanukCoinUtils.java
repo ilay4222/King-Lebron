@@ -173,6 +173,35 @@ public class HanukCoinUtils {
     }
 
     public static void main(String[] args) {
+        /////////////////////////////////////////////////////////////////////////////
+        // Step 1: Create the Genesis Block
+        Block genesisBlock = createBlock0forTestStage();
+
+        // Step 2: Define wallet numbers
+        int wallet1 = walletCode("WALLET1");
+        int wallet2 = walletCode("WALLET2");
+
+        // Step 3: Create a predefined ArrayList of Blocks
+        ArrayList<Block> blockList = new ArrayList<>();
+        blockList.add(genesisBlock);
+
+        // Step 4: Create 9 additional blocks
+        for (int i = 1; i < 10; i++) {
+            // Alternate wallet numbers
+            int walletNumber = (i % 2 == 0) ? wallet1 : wallet2;
+
+            // Serial number and dummy fields
+            int serialNumber = i;
+            byte[] prevSig8 = new byte[8];
+            System.arraycopy(blockList.get(i - 1).getBytes(), 24, prevSig8, 0, 8);
+            byte[] puzzle8 = new byte[8]; // Dummy puzzle data
+            byte[] sig12 = new byte[12];  // Dummy signature data
+
+            // Create a new block and add it to the list
+            Block newBlock = Block.create(serialNumber, walletNumber, prevSig8, puzzle8, sig12);
+            blockList.add(newBlock);
+
+        /////////////////////////////////////////////////////////////////////////////////////////
         int numCoins = Integer.parseInt(args[0]);
         System.out.println(String.format("Mining %d coins...", numCoins));
         ArrayList<Block> chain = new ArrayList<>();
