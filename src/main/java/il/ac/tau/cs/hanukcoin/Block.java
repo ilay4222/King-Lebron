@@ -15,6 +15,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 
 /**
  * Class that represnts one block in the block chane.
@@ -22,7 +23,7 @@ import java.security.NoSuchAlgorithmException;
  */
 public class Block {
     public static final int BLOCK_SZ = 36;
-    public enum BlockError {OK, BAD_SERIAL_NO, SAME_WALLET_PREV, NO_PREV_SIG, SIG_NO_ZEROS, SIG_BAD}
+    public enum BlockError {OK, BAD_SERIAL_NO, SAME_WALLET_PREV, NO_PREV_SIG, SIG_NO_ZEROS, SIG_BAD, START_NOT_EQUAL}
     protected byte[] data;
     public int getSerialNumber() {
         return HanukCoinUtils.intFromBytes(data, 0);
@@ -132,7 +133,7 @@ public class Block {
             return BlockError.SAME_WALLET_PREV;  // don't allow two consequent blocks with same wallet
         }
         if (!HanukCoinUtils.ArraysPartEquals(8, data, 8, prevBlock.data, 24)) {
-            return BlockError.NO_PREV_SIG;  // check prevSig field is indeed siganute of prev block
+            return BlockError.NO_PREV_SIG;  // check prevSig field is indeed signature of prev block
         }
         return checkSignature();
     }
@@ -154,7 +155,45 @@ public class Block {
         }
         return dump;
     }
+    
+    static private byte[] parseByteStr(String s) {
+    	   ArrayList<Byte> a = new ArrayList<Byte>();
+    	   for (String hex : s.split("\\s+")) {
+    	       byte b = (byte) Integer.parseInt(hex, 16);
+    	       a.add(b);
+    	   }
+    	   byte[] result = new byte[a.size()];
+    	   for(int i = 0; i < a.size(); i++) {
+    	       result[i] = a.get(i);
+    	   }
+    	   return result;
+    	}
 
+    	public static Block createBlock0forTestStage() {
+    	   Block g = new Block();
+    	        g.data = parseByteStr("00 00 00 00  00 00 00 00  \n" +
+    	                        "43 4F 4E 54  45 53 54 30  \n" +
+    	                        "6C E4 BA AA  70 1C E0 FC  \n" +
+    	                        "4B 72 9D 93  A2 28 FB 27  \n" +
+    	                        "4D 11 E7 25 ");
 
-}
+    	   return g;
+    	}
 
+    	public static BlockError checkBlocksValidity(ArrayList<Block> a) {
+    		Block blockI0 = a.get(0);
+    		if (!blockI0.data.equals(createBlock0forTestStage().data)){
+    			return BlockError.START_NOT_EQUAL;
+    		}
+    		BlockError err0 = blockI0.checkSignature();
+    		if (!err0.equals(BlockError.OK)) {
+    			return err0;
+    		}
+    		for (int i = 1 ; i < a.size() ; i ++) {
+    			BlockError errI =  a.get(i).checkValidNext(a.get(i-1));
+    			if (!errI.equals(BlockError.OK)) {
+        			return errI;
+        		}
+    		}
+    		return BlockError.OK;
+    	}
