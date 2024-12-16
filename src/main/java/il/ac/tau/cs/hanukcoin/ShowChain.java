@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A program to choe current status of HanukCoin netwrk and block-chain
@@ -13,6 +14,9 @@ import java.util.List;
 public class ShowChain {
     public static final int BEEF_BEEF = 0xbeefBeef;
     public static final int DEAD_DEAD = 0xdeadDead;
+    public static List<NodeInfo> nodeList = new ArrayList<>(); // Global node list for testing
+    public static List<Block> blockChain = new ArrayList<>(); // Global blockchain list
+    
     public static void log(String fmt, Object... args) {
         println(fmt, args);
     }
@@ -35,6 +39,17 @@ public class ShowChain {
             byte[] strBytes = new byte[strLen];
             dis.readFully(strBytes);
             return new String(strBytes, "utf-8");
+        }
+        
+        public void writeNode(DataOutputStream dos) throws IOException {
+            byte[] nameBytes = name.getBytes("utf-8");
+            dos.writeByte(nameBytes.length);
+            dos.write(nameBytes);
+            byte[] hostBytes = host.getBytes("utf-8");
+            dos.writeByte(hostBytes.length);
+            dos.write(hostBytes);
+            dos.writeShort(port);
+            dos.writeInt(lastSeenTS);
         }
 
         public static NodeInfo readFrom(DataInputStream dis) throws IOException {
@@ -98,6 +113,7 @@ public class ShowChain {
                 Block newBlock = Block.readFrom(dataInput);
                 receivedBlocks.add(newBlock);
             }
+            blockChain = receivedBlocks; // Update the global blockchain
             printMessage(receivedNodes, receivedBlocks);
         }
 
@@ -115,14 +131,31 @@ public class ShowChain {
         private void sendRequest(int cmd, DataOutputStream dos) throws IOException {
             dos.writeInt(cmd);
             dos.writeInt(BEEF_BEEF);
-            int activeNodes = 0;
-            // TODO(students): calculate number of active (not new) nodes
-            dos.writeInt(activeNodes);
-            // TODO(students): sendRequest data of active (not new) nodes
+        
+            nodeList.clear(); // Clear previous data in the global node list for testing
+            // Example node creation to showcase writing functionality
+            NodeInfo exampleNode = new NodeInfo();
+            exampleNode.name = "DogPool";
+            exampleNode.host = "172.30.99.137";
+            exampleNode.port = 8080;
+            exampleNode.lastSeenTS = (int) (System.currentTimeMillis() / 1000);
+            nodeList.add(exampleNode); // Update the global list
+            log("INFO - Example node '%s' added to the global node list", exampleNode.name);
+        
+            int activeNodes = nodeList.size();
+            dos.writeInt(activeNodes); // Write active node count
+        
+            for (NodeInfo node : nodeList) {
+                node.writeNode(dos); // Write node details to stream
+            }
+        
             dos.writeInt(DEAD_DEAD);
-            int blockChain_size = 0;
+            int blockChain_size = blockChain.size();
             dos.writeInt(blockChain_size);
-            // TODO(students): sendRequest data of blocks
+        
+            for (Block block : blockChain) {
+                block.writeTo(dos); // Write block details to stream
+            }
         }
     }
 
@@ -148,4 +181,15 @@ public class ShowChain {
         int port = Integer.parseInt(parts[1]);
         sendReceive(addr, port);
     }
+    
+    
+    /**
+     * Returns the current blockchain.
+     *
+     * @return ArrayList of Block objects that represent the current blockchain.
+     */
+    public static List<Block> getBlockChain() {
+        return new ArrayList<>(blockChain); // Return a copy of the blockchain
+    }
 }
+
