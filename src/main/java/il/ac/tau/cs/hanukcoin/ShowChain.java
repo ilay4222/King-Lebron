@@ -16,7 +16,7 @@ public class ShowChain {
     public static final int DEAD_DEAD = 0xdeadDead;
     public static List<NodeInfo> nodeList = new ArrayList<>(); // Global node list for testing
     public static List<Block> blockChain = new ArrayList<>(); // Global blockchain list
-    
+
     public static void log(String fmt, Object... args) {
         println(fmt, args);
     }
@@ -40,7 +40,7 @@ public class ShowChain {
             dis.readFully(strBytes);
             return new String(strBytes, "utf-8");
         }
-        
+
         public void writeNode(DataOutputStream dos) throws IOException {
             byte[] nameBytes = name.getBytes("utf-8");
             dos.writeByte(nameBytes.length);
@@ -74,7 +74,7 @@ public class ShowChain {
                 dataOutput = new DataOutputStream(connectionSocket.getOutputStream());
 
             } catch (IOException e) {
-               throw new RuntimeException("FATAL = cannot create data streams", e);
+                throw new RuntimeException("FATAL = cannot create data streams", e);
             }
         }
 
@@ -131,7 +131,7 @@ public class ShowChain {
         private void sendRequest(int cmd, DataOutputStream dos) throws IOException {
             dos.writeInt(cmd);
             dos.writeInt(BEEF_BEEF);
-        
+
             nodeList.clear(); // Clear previous data in the global node list for testing
             // Example node creation to showcase writing functionality
             NodeInfo exampleNode = new NodeInfo();
@@ -141,18 +141,18 @@ public class ShowChain {
             exampleNode.lastSeenTS = (int) (System.currentTimeMillis() / 1000);
             nodeList.add(exampleNode); // Update the global list
             log("INFO - Example node '%s' added to the global node list", exampleNode.name);
-        
+
             int activeNodes = nodeList.size();
             dos.writeInt(activeNodes); // Write active node count
-        
+
             for (NodeInfo node : nodeList) {
                 node.writeNode(dos); // Write node details to stream
             }
-        
+
             dos.writeInt(DEAD_DEAD);
             int blockChain_size = blockChain.size();
             dos.writeInt(blockChain_size);
-        
+
             for (Block block : blockChain) {
                 block.writeTo(dos); // Write block details to stream
             }
@@ -181,8 +181,8 @@ public class ShowChain {
         int port = Integer.parseInt(parts[1]);
         sendReceive(addr, port);
     }
-    
-    
+
+
     /**
      * Returns the current blockchain.
      *
