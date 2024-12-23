@@ -1,11 +1,17 @@
 package il.ac.tau.cs.hanukcoin;
+
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Random;
 
+import il.ac.tau.cs.hanukcoin.Block;
+import il.ac.tau.cs.hanukcoin.MineThread;
+
+
 public class HanukCoinUtils {
+	static final int MAX_THREAD_COUNT = 8;
     static private final int PUZZLE_BITS0 = 20;  //Note - we can make it lower for quick testing
     static private final int START_NODES = 0xBeefBeef;
     static private final int START_BLOCKS = 0xDeadDead;
@@ -227,8 +233,15 @@ public class HanukCoinUtils {
     }
 
     public static void main(String[] args) {
+    	MineThread[] threads = new MineThread[8];
+    	for (int i = 0 ; i < 8 ; i++) {
+    		threads[i] = new MineThread(i);
+    	}
+//    	for (int i = 0 ; i < 8 ; i++) {
+//    		threads[i].start();
+//    	}
         // to generate new genesis:
-        Block g1 = generateGenesis("CONTEST0");
+        Block g1 = createBlock0forTestStage();
         System.out.println(g1.binDump());
         int numCoins = Integer.parseInt(args[0]);
         System.out.println(String.format("Mining %d coins...", numCoins));
@@ -253,9 +266,9 @@ public class HanukCoinUtils {
             }
             chain.add(newBlock);
             long t2 = System.nanoTime();
-            System.out.println(String.format("mining took =%d milli", (int) ((t2 - t1) / 10000000)));
             System.out.println(newBlock.binDump());
-
+            System.out.println(String.format("mining took =%d milli", (int) ((t2 - t1) / 10000000)));
+            
         }
     }
 }
