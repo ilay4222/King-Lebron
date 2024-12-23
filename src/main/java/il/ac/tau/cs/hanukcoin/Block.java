@@ -210,7 +210,7 @@ public class Block {
 
     	public static BlockError checkBlocksValidity(ArrayList<Block> a) {
     		Block blockI0 = a.get(0);
-    		if (!blockI0.same(createBlock0forTestStage())){
+    		if (!blockI0.equals(createBlock0forTestStage())){
     			return BlockError.START_NOT_EQUAL;
     		}
     		BlockError err0 = blockI0.checkSignature();
