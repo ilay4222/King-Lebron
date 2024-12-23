@@ -12,10 +12,12 @@ package il.ac.tau.cs.hanukcoin;
 
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import il.ac.tau.cs.hanukcoin.Block.BlockError;
 
@@ -33,19 +35,14 @@ public class Block {
     public int getWalletNumber() {
         return HanukCoinUtils.intFromBytes(data, 4);
     }
-    public boolean same(Block other) {
-    	byte[] a = this.data;
-    	byte[] b = other.data;
-    	if (a.length != b.length) {
-    		return false;
-    	}
-    	for (int i = 0 ; i < a.length ; i ++) {
-    		if (a[i] != b[i]) {
-    			return false;
-    		}
-    	}
-    	return true;
+    
+    public void writeTo(DataOutputStream dos) throws IOException {
+        dos.write(getBytes(), 0, BLOCK_SZ);
     }
+    public boolean equals(Block other) {
+        return Arrays.equals(other.getBytes(), this.getBytes());
+    }
+    
 
     /**
      * Creste a block without a signature or puzzle fields.
@@ -85,8 +82,19 @@ public class Block {
         // Treat it as 2 32bit integers
         HanukCoinUtils.intIntoBytes(data, 16, (int)(longPuzzle >> 32));
         HanukCoinUtils.intIntoBytes(data, 20, (int)(longPuzzle & 0xFFFFFFFF));
+        
+        
     }
-
+    
+    /**
+     * compare this.puzzle - other.puzzle
+     * @param other
+     * @return 1 if this puzzle bigger, 0 if equal, -1 if this smaller
+     */
+    public int comparePuzzle(Block other) {
+        return HanukCoinUtils.ArraysPartCompare(8, this.getBytes(), 16, other.getBytes(), 16);
+    }
+    
     /**
      * given a block signature - take first 12 bytes of it and put into the signature field of this block
      * @param sig
@@ -95,7 +103,12 @@ public class Block {
         System.arraycopy(sig, 0, data, 24, 12);
     }
 
-
+    public Block clone() {
+        Block b = new Block();
+        b.data = Arrays.copyOf(this.getBytes(), BLOCK_SZ);
+        return b;
+    }
+    
     /**
      * calc block signature based on all fields besides signature itself.
      * @return  16 byte MD5 signature
